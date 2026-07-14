@@ -1,0 +1,26 @@
+#version 450
+
+layout(local_size_x = 64) in; // There are 64 threads per workgroup - (64, 1, 1) workgroup / block dimensions
+// read/write data block (buffers are read/write, uniforms are read-only)
+// binding = 0 - Slot that connects to a VkBuffer on CPU - VkDescriptorBufferInfo with binding slot 0
+layout(std430, binding = 0) readonly buffer InData  { float inValues[]; };
+layout(std430, binding = 1) buffer OutData { float outValues[]; };
+
+layout(std140, binding = 2) uniform Params {
+    float offset;
+} ubo;
+layout(push_constant) uniform PushParams {
+    uint numElements;
+} push;
+void main() {
+    uint i = gl_GlobalInvocationID.x;
+    if (i >= push.numElements) return;
+    outValues[i] = inValues[i] * 2.0 + ubo.offset;
+}
+
+// Notes
+    // gl_GlobalInvocationID is a uvec3
+    // gl_GlobalInvocationID = gl_WorkGroupID * gl_WorkGroupSize + gl_LocalInvocationID
+    // gl_WorkGroupSize based on layout - local size (here: (64, 1, 1))
+    // gl_WorkGroupID - which workgroup we are in [0, groupcount -1] per axis : vkCmdDispatch determines groupCount on CPU side
+    // gl_LocalInvocationID - the invocation's position within its workgroup - ranges 0 to local_size-1

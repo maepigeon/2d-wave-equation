@@ -8,6 +8,7 @@ project($(ProjectName))
 # Use the C++23 standard.
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 #SDL3: use system install if available, otherwise fetch from source
 find_package(SDL3 QUIET)
@@ -34,7 +35,6 @@ if(NOT glm_FOUND)
     )
     FetchContent_MakeAvailable(glm)
 endif()
-
 find_package(SDL3_image QUIET)
 if(NOT SDL3_image_FOUND)
     FetchContent_Declare(
@@ -46,16 +46,46 @@ if(NOT SDL3_image_FOUND)
     FetchContent_MakeAvailable(SDL3_image)
 endif()
 
+# Vulkan loader + headers (VMA and vk-bootstrap call into the loader directly).
+find_package(Vulkan REQUIRED)
+
+find_package(fetch_vk_bootstrap QUIET)
+if(NOT fetch_vk_bootstrap_FOUND)
+    include(FetchContent)
+    FetchContent_Declare(
+        fetch_vk_bootstrap
+        GIT_REPOSITORY https://github.com/charles-lunarg/vk-bootstrap
+        GIT_TAG        v1.3.302
+    )
+    FetchContent_MakeAvailable(fetch_vk_bootstrap)
+endif()
+
+find_package(fetch_vma QUIET)
+if(NOT fetch_vma_FOUND)
+    FetchContent_Declare(
+        fetch_vma
+        GIT_REPOSITORY https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
+        GIT_TAG        v3.1.0
+    )
+    FetchContent_MakeAvailable(fetch_vma)
+endif()
+
+
 
 # sources variable contains a link to all cpp files to compile
 set(SOURCES
     src/main.cpp
+    src/gpu-sim.cpp
+    src/double.cpp
 )
 add_executable(wave-equation ${SOURCES})
 
 target_link_libraries(${ProjectName} SDL3::SDL3)
 target_link_libraries(${ProjectName} glm::glm)
 target_link_libraries(${ProjectName} SDL3_image::SDL3_image)
+target_link_libraries(${ProjectName} vk-bootstrap::vk-bootstrap)
+target_link_libraries(${ProjectName} GPUOpen::VulkanMemoryAllocator)
+target_link_libraries(${ProjectName} Vulkan::Vulkan)
 
 set(TINYGLTF_HEADER_ONLY ON CACHE INTERNAL "" FORCE)
 set(TINYGLTF_INSTALL OFF CACHE INTERNAL "" FORCE)

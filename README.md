@@ -6,12 +6,17 @@ To build and run
 
     cmake ../CMakeLists.txt
 
-    cmake --build
+    cmake .
 
     make
 
     ./wave-equation
 
+
+To compile shaders
+
+    glslc double.comp -o double.comp.spv
+    
 
 To debug
 
@@ -23,4 +28,4 @@ To debug
 
     run
 
-Note: This has 2 dependencies, which the project discovers using its CMakeLists.txt. SDL3 and glm must first be installed to build.
+Note: This has 3 dependencies, which the project discovers using its CMakeLists.txt. SDL3, glm, and vkBootstrap must first be installed to build.

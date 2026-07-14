@@ -5,6 +5,8 @@
 #include <inttypes.h>
 #include <time.h>
 
+#include "double.hpp"
+
 typedef union {
     struct {
         std::uint8_t r, g, b, a;
@@ -59,10 +61,10 @@ void setSurfaceColor(SDL_Surface *surface, int width, int height, Color color) {
 
 
 void waveEquationSimStep(float deltaTime, int width, int height, std::vector<float>& G0, std::vector<float>& G1, std::vector<float>& G2) {
-    float a = 10.0; // wave propagation velocity
+    float a = 40.0; // wave propagation velocity
     float h = 1.0; // spatial distance between elements
-    float multiplier = deltaTime * a / h;
-    multiplier *= multiplier;
+    float speed = deltaTime * a / h;
+    speed *= speed;
 
     // https://beltoforion.de/en/recreational_mathematics/2d-wave-equation.php
     for (int x = 0; x < width; x++) {
@@ -71,7 +73,7 @@ void waveEquationSimStep(float deltaTime, int width, int height, std::vector<flo
             if (isBoundary) {
                 G0[y * width + x] = 127;
             } else {
-                float laplace = multiplier * (G1[(y-1) * width + x] + G1[(y+1) * width + x]
+                float laplace = speed * (G1[(y-1) * width + x] + G1[(y+1) * width + x]
                 + G1[y * width + x + 1] + G1[y * width + x - 1] - 4 * G1[y * width + x]);
                 float timeDerivative_excludingFuture = G2[y * width + x] - 2 * G1[y * width + x];
                 float future = laplace - timeDerivative_excludingFuture; 
@@ -97,9 +99,12 @@ void renderSimTexture(std::vector<float>& G0, SDL_Surface *surface, int width, i
 
 int main(int argc, char* argv[]) {
 
+    Double d;
+    d.run_compute();
+
     // Window setup
     SDL_Init(SDL_INIT_VIDEO);
-    int32_t windowWidth = 800;
+    int32_t windowWidth = 960;
     int32_t windowHeight = 600;
     int64_t windowFlags = SDL_WINDOW_INPUT_FOCUS;
     SDL_Window* window = SDL_CreateWindow("Renderer", windowWidth, windowHeight, windowFlags);
@@ -139,7 +144,7 @@ int main(int argc, char* argv[]) {
     std::vector<float>* G2 = &buffer2;
 
     // Initial disturbance
-    (*G1)[gridHeight/2 * gridWidth + gridWidth/2] = 1000.;
+    (*G1)[gridHeight/2 * gridWidth + gridWidth/2] = 5000.;
 
     // Main loop
     uint64_t lastTime = SDL_GetTicks();
@@ -160,6 +165,7 @@ int main(int argc, char* argv[]) {
         }
         //Set background color (Note: not needed)
         Color backgroundColor = hueToColor(time / 6.);
+        //Color backgroundColor = hueToColor(time / 6.);
         //setSurfaceColor(surface, gridWidth, gridHeight, backgroundColor);
        
         // Run the 2d wave equation step
