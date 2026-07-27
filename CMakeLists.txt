@@ -4,7 +4,7 @@ include(FetchContent)
 set(ProjectName 
     wave-equation)
 
-project($(ProjectName))
+project(${ProjectName})
 # Use the C++23 standard.
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
@@ -70,13 +70,14 @@ if(NOT fetch_vma_FOUND)
     FetchContent_MakeAvailable(fetch_vma)
 endif()
 
-
-
 # sources variable contains a link to all cpp files to compile
 set(SOURCES
     src/main.cpp
-    src/gpu-sim.cpp
+    src/sdlGraphicsHelpers.cpp
+    src/cpuFD.cpp
+    src/wave-gpu.cpp
     src/double.cpp
+    src/vma_impl.cpp
 )
 add_executable(wave-equation ${SOURCES})
 

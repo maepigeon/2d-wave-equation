@@ -1,0 +1,30 @@
+#version 450
+
+layout(local_size_x = 16, local_size_y = 16) in; // 256 threads per workgroup
+
+layout(binding = 0, r32f) uniform writeonly image2D G0;
+layout(binding = 1, r32f) uniform readonly image2D G1;
+layout(binding = 2, r32f) uniform readonly image2D G2;
+
+
+layout(push_constant) uniform PushParams {
+    uint width;
+    uint height;
+    float dt2v2_dx2; // multiplier constant := (deltaTime * wave speed / distance between grid elements) squared
+} push;
+
+void main() {
+    uint x = gl_GlobalInvocationID.x;
+    uint y = gl_GlobalInvocationID.y;
+    if (x >= push.width || y >= push.height) return;
+    bool isBoundary = x == 0 || y == 0 || x == push.width - 1 || y == push.height - 1;
+    if (isBoundary) {
+        imageStore(G0, ivec2(x, y), vec4(127.));
+    } else {
+        float laplace = push.dt2v2_dx2 * (imageLoad(G1, ivec2(x, y - 1)).r + imageLoad(G1, ivec2(x, y + 1)).r
+        + imageLoad(G1, ivec2(x + 1, y)).r + imageLoad(G1, ivec2(x - 1, y)).r - 4. * imageLoad(G1, ivec2(x, y)).r);
+        float damping = 0.005;
+        float future = laplace + 2 * imageLoad(G1, ivec2(x, y)) - imageLoad(G2, ivec2(x, y)) - damping * (imageLoad(G1, ivec2(x, y)) - imageLoad(G2, ivec2(x, y)));
+        imageStore(G0, ivec2(x, y), vec4(future));   
+    }         
+}

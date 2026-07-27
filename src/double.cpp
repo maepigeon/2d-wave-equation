@@ -1,13 +1,8 @@
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wnullability-completeness"
-#define VMA_IMPLEMENTATION
-#include "vk_mem_alloc.h"
-#pragma clang diagnostic pop
 #include "double.hpp"
 #include <fstream>
 #include <iostream>
 
-VmaAllocator Double::createVmaAllocator(GpuContext& context, vkb::PhysicalDevice& physicalDevice) {
+VmaAllocator Double::createVmaAllocator(DoubleNS::GpuContext& context, vkb::PhysicalDevice& physicalDevice) {
     VmaAllocatorCreateInfo allocatorInfo = {};
     allocatorInfo.physicalDevice = physicalDevice;  
     allocatorInfo.device = context.device;
@@ -16,8 +11,8 @@ VmaAllocator Double::createVmaAllocator(GpuContext& context, vkb::PhysicalDevice
     return context.allocator;
 }
 
-GpuContext Double::setupShaderContext() {
-    GpuContext context;
+DoubleNS::GpuContext Double::setupShaderContext() {
+    DoubleNS::GpuContext context;
     std::vector<const char*> extensions;
     #ifdef __APPLE__
         extensions.push_back("VK_KHR_portability_enumeration");
@@ -71,24 +66,23 @@ GpuContext Double::setupShaderContext() {
     return context;
 }
  
-void Double::teardownShaderContext(GpuContext& context) {
+void Double::teardownShaderContext(DoubleNS::GpuContext& context) {
     vmaDestroyAllocator(context.allocator);
     vkb::destroy_device(context.device);
     vkb::destroy_instance(context.instance);
 }
 
-
-void Double::createUniform(GpuContext& context) {
+void Double::createUniform(DoubleNS::GpuContext& context) {
     ParamsUBO params{};
     params.offset = 100.0f;   
     VkBufferUsageFlagBits usageFlag = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
     uint32_t bufferFlags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT;
-    GpuBuffer uboBuffer = createBuffer(context.allocator, sizeof(ParamsUBO), usageFlag, bufferFlags);
+    DoubleNS::GpuBuffer uboBuffer = createBuffer(context.allocator, sizeof(ParamsUBO), usageFlag, bufferFlags);
     std::memcpy(uboBuffer.info.pMappedData, &params, sizeof(ParamsUBO));
     vmaFlushAllocation(context.allocator, uboBuffer.allocation, 0, sizeof(ParamsUBO));
 }
 
-GpuBuffer Double::createBuffer(VmaAllocator allocator, VkDeviceSize size, VkBufferUsageFlags usage, VmaAllocationCreateFlags vmaFlags) {
+DoubleNS::GpuBuffer Double::createBuffer(VmaAllocator allocator, VkDeviceSize size, VkBufferUsageFlags usage, VmaAllocationCreateFlags vmaFlags) {
     VkBufferCreateInfo bufferInfo {};
     bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
     bufferInfo.size = size;
@@ -96,7 +90,7 @@ GpuBuffer Double::createBuffer(VmaAllocator allocator, VkDeviceSize size, VkBuff
     VmaAllocationCreateInfo allocCreateInfo {};
     allocCreateInfo.usage = VMA_MEMORY_USAGE_AUTO;
     allocCreateInfo.flags = vmaFlags;
-    GpuBuffer result {};
+    DoubleNS::GpuBuffer result {};
     result.size = size;
     vmaCreateBuffer(allocator, &bufferInfo, &allocCreateInfo, &result.buffer, &result.allocation, &result.info);
     return result;
@@ -182,7 +176,7 @@ vk::DescriptorSetLayout Double::createStorageBufferLayout(vk::Device device, uin
     return device.createDescriptorSetLayout(info);
 }
 
-void Double::printResults(int numElements, const GpuBuffer& inBuffer, const GpuBuffer& outBuffer) {
+void Double::printResults(int numElements, const DoubleNS::GpuBuffer& inBuffer, const DoubleNS::GpuBuffer& outBuffer) {
     float* inPtr  = static_cast<float*>(inBuffer.info.pMappedData);
     float* outPtr = static_cast<float*>(outBuffer.info.pMappedData);
 
@@ -208,7 +202,7 @@ void Double::readShader(std::string fName, std::vector<char>& shaderContents) {
     shaderFile.read(shaderContents.data(), fileSize);
 }
 
-ComputePipeline Double::createComputePipeline(std::vector<char>& shaderContents, vk::Device device, vk::DescriptorSetLayout descriptorSetLayout) {
+DoubleNS::ComputePipeline Double::createComputePipeline(std::vector<char>& shaderContents, vk::Device device, vk::DescriptorSetLayout descriptorSetLayout) {
     vk::ShaderModuleCreateInfo shaderModuleInfo({}, shaderContents.size(),
         reinterpret_cast<const uint32_t*>(shaderContents.data()));
     vk::ShaderModule shaderModule = device.createShaderModule(shaderModuleInfo);
@@ -249,19 +243,18 @@ void Double::recordComputeDispatch(vk::CommandBuffer commandBuffer, vk::Pipeline
     commandBuffer.end();
 }
 
-void Double::run_compute() {
+void Double::run_compute(uint32_t numElements) {
     // Enable MoltenVK if needed
     #ifdef __APPLE__
         setenv("VK_ICD_FILENAMES", "/Users/mae/VulkanSDK/1.4.350.0/macOS/share/vulkan/icd.d/MoltenVK_icd.json", 1);
 	#endif
-    GpuContext context = setupShaderContext();
+    DoubleNS::GpuContext context = setupShaderContext();
     vk::Device device = context.device.device;
-    uint32_t numElements = 1000;
     uint32_t bufferSize = numElements * sizeof(float);
     VkBufferUsageFlags bufferUsageFlags = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
     VmaAllocationCreateFlags vmaFlags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT;
-    GpuBuffer inBuffer = createBuffer(context.allocator, bufferSize, bufferUsageFlags, vmaFlags);
-    GpuBuffer outBuffer = createBuffer(context.allocator, bufferSize, bufferUsageFlags, vmaFlags );
+    DoubleNS::GpuBuffer inBuffer = createBuffer(context.allocator, bufferSize, bufferUsageFlags, vmaFlags);
+    DoubleNS::GpuBuffer outBuffer = createBuffer(context.allocator, bufferSize, bufferUsageFlags, vmaFlags );
 
     float* inBufferData = static_cast<float*>(inBuffer.info.pMappedData);
     for (int i = 0; i < numElements; i++) {
@@ -271,7 +264,7 @@ void Double::run_compute() {
 
     ParamsUBO params{}; // UBO
     params.offset = 100.0f;
-    GpuBuffer uboBuffer = createBuffer(context.allocator, sizeof(ParamsUBO),
+    DoubleNS::GpuBuffer uboBuffer = createBuffer(context.allocator, sizeof(ParamsUBO),
         VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
         VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT);
     std::memcpy(uboBuffer.info.pMappedData, &params, sizeof(ParamsUBO));
@@ -286,7 +279,7 @@ void Double::run_compute() {
     std::string fName = "/Users/mae/workspace/wave-equation/src/shaders/double.comp.spv";
     std::vector<char> shaderContents {};
     readShader(fName, shaderContents);
-    ComputePipeline cp = createComputePipeline(shaderContents, context.device.device, layout);
+    DoubleNS::ComputePipeline cp = createComputePipeline(shaderContents, context.device.device, layout);
     vk::CommandPoolCreateInfo CommandPoolCreateInfo(vk::CommandPoolCreateFlags(), context.computeQueueFamily);
     vk::CommandPool commandPool = device.createCommandPool(CommandPoolCreateInfo);
     vk::CommandBufferAllocateInfo allocInfo(commandPool, vk::CommandBufferLevel::ePrimary, 1);
