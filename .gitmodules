@@ -1,0 +1,3 @@
+[submodule "lib/tiny-geolib"]
+	path = lib/tiny-geolib
+	url = https://github.com/maepigeon/tiny-geolib

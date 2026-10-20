@@ -11,10 +11,10 @@ typedef union {
         std::uint8_t r, g, b, a;
     } channels;
     std::uint32_t bits;
-} Color;
+} ColorData;
 
-Color hueToColor(float h);
+ColorData hueToColor(float h);
 uint8_t float_to_uint8(float value);
-void setSurfaceColor(SDL_Surface *surface, int width, int height, Color color);
-void renderSimTexture(std::vector<float>& G0, SDL_Surface *surface, int width, int height, Color color);
+void setSurfaceColor(SDL_Surface *surface, int width, int height, ColorData color);
+void renderSimTexture(std::vector<float>& G0, SDL_Surface *surface, int width, int height, ColorData color);
 #endif

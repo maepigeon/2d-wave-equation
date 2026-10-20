@@ -97,7 +97,7 @@ int cpuFdMain(int width, int height, float simSpeed) {
             }
         }
         //Set background color (Note: not needed)
-        Color backgroundColor = hueToColor(time / 6.);
+        ColorData backgroundColor = hueToColor(time / 6.);
         //Color backgroundColor = hueToColor(time / 6.);
         //setSurfaceColor(surface, gridWidth, gridHeight, backgroundColor);
        

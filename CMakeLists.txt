@@ -70,6 +70,28 @@ if(NOT fetch_vma_FOUND)
     FetchContent_MakeAvailable(fetch_vma)
 endif()
 
+FetchContent_Declare(
+    cpu-rasterizer
+    GIT_REPOSITORY https://github.com/maepigeon/cpu-rasterizer.git
+    GIT_TAG        main
+)
+FetchContent_MakeAvailable(cpu-rasterizer)
+
+
+FetchContent_Declare(
+    tiny-geolib
+    GIT_REPOSITORY https://github.com/maepigeon/tiny-geolib.git
+    GIT_TAG        main
+)
+FetchContent_MakeAvailable(tiny-geolib)
+
+# Rasterizer viewer connection
+add_library(viewer STATIC src/Viewer.cpp)
+target_link_libraries(viewer PUBLIC glm::glm PRIVATE rasterizer)
+target_include_directories(viewer PUBLIC ${cpu-rasterizer_SOURCE_DIR}/src)
+target_include_directories(viewer PUBLIC ${cpu-rasterizer_SOURCE_DIR}/src/CPURender)
+target_compile_features(viewer PUBLIC cxx_std_23)
+
 # sources variable contains a link to all cpp files to compile
 set(SOURCES
     src/main.cpp
@@ -78,15 +100,18 @@ set(SOURCES
     src/wave-gpu.cpp
     src/double.cpp
     src/vma_impl.cpp
+    src/cpuFEM.cpp
 )
-add_executable(wave-equation ${SOURCES})
 
+add_executable(wave-equation ${SOURCES})
 target_link_libraries(${ProjectName} SDL3::SDL3)
 target_link_libraries(${ProjectName} glm::glm)
 target_link_libraries(${ProjectName} SDL3_image::SDL3_image)
 target_link_libraries(${ProjectName} vk-bootstrap::vk-bootstrap)
 target_link_libraries(${ProjectName} GPUOpen::VulkanMemoryAllocator)
 target_link_libraries(${ProjectName} Vulkan::Vulkan)
+target_link_libraries(${ProjectName} tiny-geolib) 
+target_link_libraries(${ProjectName} viewer)
 
 set(TINYGLTF_HEADER_ONLY ON CACHE INTERNAL "" FORCE)
 set(TINYGLTF_INSTALL OFF CACHE INTERNAL "" FORCE)

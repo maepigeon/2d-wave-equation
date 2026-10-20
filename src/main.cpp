@@ -7,6 +7,7 @@
 #include "cpuFD.hpp"
 #include "wave-gpu.hpp"
 #include "double.hpp"
+#include "cpuFEM.hpp"
 
 enum programOption {cpuFd, gpuFd, gpuTest, cpuFem, nullMode};
 
@@ -43,6 +44,8 @@ int main(int argc, char* argv[]) {
     if (mode == gpuTest) {
         Double d;
         d.run_compute(100);
+    } else if (mode == cpuFem) {
+        return cpuFEM::cpuFemMain( width, height);
     } else if (mode == cpuFd) {
         return cpuFdMain(width, height, simSpeed);
     } else if (mode == gpuFd) {

@@ -1,5 +1,5 @@
-#ifndef WAVE
-#define WAVE
+#ifndef WAVE_FD_GPU
+#define WAVE_FD_GPU
 #include <VkBootstrap.h>
 #include <vk_mem_alloc.h>
 #include <vector>

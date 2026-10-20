@@ -274,8 +274,7 @@ WaveFdNS::GpuBuffer WaveGpu::createBuffer(VmaAllocator allocator, VkDeviceSize s
     return result;
 }
 
-void WaveGpu::initializeImageData(vk::Device device, VmaAllocator allocator, vk::Queue queue, vk::CommandPool commandPool,
-        std::vector<float>& data, std::vector<vk::Image>& targetImages, uint32_t width, uint32_t height) {
+void WaveGpu::initializeImageData(vk::Device device, VmaAllocator allocator, vk::Queue queue, vk::CommandPool commandPool, std::vector<float>& data, std::vector<vk::Image>& targetImages, uint32_t width, uint32_t height) {
     WaveFdNS::GpuBuffer stagingBuffer = createBuffer(allocator, width * height * sizeof(float),
         VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
         VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT);
@@ -300,8 +299,7 @@ void WaveGpu::initializeImageData(vk::Device device, VmaAllocator allocator, vk:
     vmaDestroyBuffer(allocator, stagingBuffer.buffer, stagingBuffer.allocation);
 }
 
-void WaveGpu::run_compute(uint32_t gridWidth, uint32_t gridHeight, float dx, float velocity,
-                SDL_Surface* surface, SDL_Texture* texture, SDL_Renderer* sdlRenderer) {
+void WaveGpu::run_compute(uint32_t gridWidth, uint32_t gridHeight, float dx, float velocity, SDL_Surface* surface, SDL_Texture* texture, SDL_Renderer* sdlRenderer) {
     // Enable MoltenVK if needed
     #ifdef __APPLE__
         setenv("VK_ICD_FILENAMES", "/Users/mae/VulkanSDK/1.4.350.0/macOS/share/vulkan/icd.d/MoltenVK_icd.json", 1);
@@ -402,7 +400,7 @@ void WaveGpu::run_compute(uint32_t gridWidth, uint32_t gridHeight, float dx, flo
         device.resetFences({Fence});
         vk::SubmitInfo submitInfo(0, nullptr, nullptr, 1, &commandBuffer);
         Queue.submit({submitInfo}, Fence);
-        device.waitForFences({Fence}, true, UINT64_MAX);
+        (void)device.waitForFences({Fence}, true, UINT64_MAX);
 
         //readback, needs its own command buffer + submit + wait
         commandBuffer.reset();
@@ -422,12 +420,12 @@ void WaveGpu::run_compute(uint32_t gridWidth, uint32_t gridHeight, float dx, flo
         device.resetFences({Fence});
         vk::SubmitInfo copySubmit(0, nullptr, nullptr, 1, &commandBuffer);
         Queue.submit({copySubmit}, Fence);
-        device.waitForFences({Fence}, true, UINT64_MAX);
+        (void)device.waitForFences({Fence}, true, UINT64_MAX);
         std::vector<float> hostData(gridWidth * gridHeight);
         std::memcpy(hostData.data(), stagingBuffer.info.pMappedData, hostData.size() * sizeof(float));
         
         //Render hostData image to surface
-        Color backgroundColor = hueToColor(time / 6.);
+        ColorData backgroundColor = hueToColor(time / 6.);
         SDL_LockSurface(surface);
         renderSimTexture(hostData, surface, gridWidth, gridHeight, backgroundColor);
         SDL_UnlockSurface(surface);

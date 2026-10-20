@@ -8,14 +8,14 @@ uint8_t float_to_uint8(float value) {
 }
 
 // hue value in range [0, 1.0) -> Bright color w/ S=V=C=1
-Color hueToColor(float h) {
+ColorData hueToColor(float h) {
     h = std::fmod(h, 1.0f); // take part of value after decimal
 
     float x = 1.0f - std::fabs(std::fmod(h * 6.0f, 2.0f) - 1.0f);
     std::uint8_t X = static_cast<std::uint8_t>(x * 255.0f + 0.5f);  // rounded
 
     float sectorSize = 1.0f / 6.0f;
-    Color c;
+    ColorData c;
     if      (h < 1.f * sectorSize) { c = {255,   X,   0, 255}; }
     else if (h < 2.f * sectorSize) { c = {  X, 255,   0, 255}; }
     else if (h < 3.f * sectorSize) { c = {  0, 255,   X, 255}; }
@@ -25,10 +25,8 @@ Color hueToColor(float h) {
     return c;
 }
 
-void setSurfaceColor(SDL_Surface *surface, int width, int height, Color color) {
+void setSurfaceColor(SDL_Surface *surface, int width, int height, ColorData color) {
     SDL_LockSurface(surface);
-    // Use memset for fast clearing if color is black (0x00000000)
-    // For other colors, use fast fill
     uint32_t fill_color = color.bits;
     uint32_t* pixels = (uint32_t*)surface->pixels;
     int pixel_count = width * height;
@@ -44,7 +42,7 @@ void setSurfaceColor(SDL_Surface *surface, int width, int height, Color color) {
     }
     SDL_UnlockSurface(surface);
 }
-void renderSimTexture(std::vector<float>& G0, SDL_Surface *surface, int width, int height, Color color) {
+void renderSimTexture(std::vector<float>& G0, SDL_Surface *surface, int width, int height, ColorData color) {
     for (int x = 0; x < width; x++) {
         for (int y = 0; y < height; y++) {
             uint32_t* target_pixel = (uint32_t *) ((uint8_t *) surface->pixels + y * surface->pitch + x * SDL_BYTESPERPIXEL(surface->format));
@@ -52,7 +50,7 @@ void renderSimTexture(std::vector<float>& G0, SDL_Surface *surface, int width, i
             uint8_t r = float_to_uint8((value + color.channels.r) * 0.5);
             uint8_t g = float_to_uint8((value + color.channels.g) * 0.5);
             uint8_t b = float_to_uint8((value + color.channels.b) * 0.5);
-            Color c = {r, g, b, 255};
+            ColorData c = {r, g, b, 255};
             *target_pixel = c.bits;
         }
     }
